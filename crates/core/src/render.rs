@@ -1,5 +1,5 @@
 use crate::particle::Particle;
-use tiny_skia::{BlendMode, Color, FillRule, Paint, PathBuilder, Pixmap, Rect, Transform};
+use tiny_skia::{BlendMode, Color, FillRule, Paint, PathBuilder, Pixmap, Rect, Shader, Transform};
 
 /// Integer pixel rectangle used for damage tracking.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -127,10 +127,12 @@ impl Renderer {
         let Some(rect) = rect.clamp(self.pixmap.width() as i32, self.pixmap.height() as i32) else {
             return;
         };
-        let mut clear = Paint::default();
-        clear.set_color(Color::TRANSPARENT);
-        clear.blend_mode = BlendMode::Clear;
-        clear.anti_alias = false;
+        let clear = Paint {
+            shader: Shader::SolidColor(Color::TRANSPARENT),
+            blend_mode: BlendMode::Clear,
+            anti_alias: false,
+            ..Default::default()
+        };
         if let Some(r) = Rect::from_xywh(rect.x as f32, rect.y as f32, rect.w as f32, rect.h as f32)
         {
             self.pixmap
@@ -140,9 +142,11 @@ impl Renderer {
 
     /// `origin` is the pixmap's top-left in global coordinates.
     pub fn draw_particles(&mut self, particles: &[Particle], origin: (f32, f32), scale: f32) {
-        let mut paint = Paint::default();
-        paint.anti_alias = true;
-        paint.blend_mode = BlendMode::SourceOver;
+        let mut paint = Paint {
+            anti_alias: true,
+            blend_mode: BlendMode::SourceOver,
+            ..Default::default()
+        };
 
         for p in particles {
             let lx = (p.x - origin.0) * scale;

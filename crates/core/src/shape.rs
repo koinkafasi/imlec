@@ -2,9 +2,10 @@ use serde::{Deserialize, Serialize};
 
 pub const MAX_VERTS: usize = 12;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize, Default)]
 #[serde(rename_all = "snake_case")]
 pub enum Shape {
+    #[default]
     Circle,
     Square,
     Triangle,
@@ -12,12 +13,6 @@ pub enum Shape {
     Star,
     Spark,
     Hexagon,
-}
-
-impl Default for Shape {
-    fn default() -> Self {
-        Shape::Circle
-    }
 }
 
 /// Fixed-capacity vertex buffer so emission never allocates.
@@ -97,9 +92,9 @@ fn regular(
     offset: f32,
 ) -> usize {
     let step = std::f32::consts::TAU / n as f32;
-    for i in 0..n {
+    for (i, point) in out.iter_mut().take(n).enumerate() {
         let a = offset + rotation + step * i as f32;
-        out[i] = (cx + r * a.cos(), cy + r * a.sin());
+        *point = (cx + r * a.cos(), cy + r * a.sin());
     }
     n
 }
@@ -115,10 +110,10 @@ fn star(
 ) -> usize {
     let n = spikes * 2;
     let step = std::f32::consts::TAU / n as f32;
-    for i in 0..n {
+    for (i, point) in out.iter_mut().take(n).enumerate() {
         let r = if i % 2 == 0 { outer } else { inner };
         let a = -std::f32::consts::FRAC_PI_2 + rotation + step * i as f32;
-        out[i] = (cx + r * a.cos(), cy + r * a.sin());
+        *point = (cx + r * a.cos(), cy + r * a.sin());
     }
     n
 }

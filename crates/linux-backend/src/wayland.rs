@@ -446,7 +446,8 @@ impl Overlay {
         let Some(info) = self.output_state.info(output) else {
             return;
         };
-        let shm = self.shm.clone();
+        // Split borrow: `shm` and `surfaces` are disjoint fields of self.
+        let shm = &self.shm;
         let Some(surface) = self.surfaces.iter_mut().find(|s| &s.output == output) else {
             return;
         };
@@ -456,7 +457,7 @@ impl Overlay {
         let scale = info.scale_factor.max(1);
         if scale != surface.scale {
             surface.scale = scale;
-            surface.rebuild(&shm);
+            surface.rebuild(shm);
         }
     }
 
@@ -481,14 +482,14 @@ impl CompositorHandler for Overlay {
         surface: &wl_surface::WlSurface,
         new_factor: i32,
     ) {
-        let shm = self.shm.clone();
+        let shm = &self.shm;
         if let Some(target) = self
             .surfaces
             .iter_mut()
             .find(|s| s.layer.wl_surface() == surface)
         {
             target.scale = new_factor.max(1);
-            target.rebuild(&shm);
+            target.rebuild(shm);
         }
     }
 
@@ -565,7 +566,7 @@ impl LayerShellHandler for Overlay {
         configure: LayerSurfaceConfigure,
         _serial: u32,
     ) {
-        let shm = self.shm.clone();
+        let shm = &self.shm;
         let Some(surface) = self.surfaces.iter_mut().find(|s| &s.layer == layer) else {
             return;
         };
@@ -586,7 +587,7 @@ impl LayerShellHandler for Overlay {
             .map(|r| (r.width(), r.height()) != surface.buffer_size())
             .unwrap_or(true);
         if needs_rebuild {
-            surface.rebuild(&shm);
+            surface.rebuild(shm);
         }
         surface.configured = true;
         self.update_bounds();
