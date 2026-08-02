@@ -275,10 +275,13 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
 
     // Config reload poll. Cheap enough at 2s and avoids an inotify dependency.
     loop_handle
-        .insert_source(Timer::from_duration(Duration::from_secs(2)), |_, _, state| {
-            state.reload_config_if_changed();
-            TimeoutAction::ToDuration(Duration::from_secs(2))
-        })
+        .insert_source(
+            Timer::from_duration(Duration::from_secs(2)),
+            |_, _, state| {
+                state.reload_config_if_changed();
+                TimeoutAction::ToDuration(Duration::from_secs(2))
+            },
+        )
         .map_err(|e| anyhow!("inserting config watcher: {e}"))?;
 
     loop {
@@ -302,7 +305,9 @@ impl Overlay {
         match signal {
             InputSignal::Motion { dx, dy } => self.pointer.on_motion(dx, dy),
             InputSignal::Key(class) => {
-                let Some(kind) = class.emit_kind() else { return };
+                let Some(kind) = class.emit_kind() else {
+                    return;
+                };
                 let Some((x, y)) = self.pointer.position() else {
                     return;
                 };
@@ -526,7 +531,12 @@ impl OutputHandler for Overlay {
         self.sync_outputs();
     }
 
-    fn update_output(&mut self, _: &Connection, _: &QueueHandle<Self>, output: wl_output::WlOutput) {
+    fn update_output(
+        &mut self,
+        _: &Connection,
+        _: &QueueHandle<Self>,
+        output: wl_output::WlOutput,
+    ) {
         self.update_geometry(&output);
         self.update_bounds();
     }

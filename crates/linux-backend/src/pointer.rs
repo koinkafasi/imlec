@@ -119,9 +119,12 @@ impl Pointer {
 fn hyprland_socket() -> Option<PathBuf> {
     let sig = std::env::var("HYPRLAND_INSTANCE_SIGNATURE").ok()?;
     let candidates = [
-        std::env::var("XDG_RUNTIME_DIR")
-            .ok()
-            .map(|r| PathBuf::from(r).join("hypr").join(&sig).join(".socket.sock")),
+        std::env::var("XDG_RUNTIME_DIR").ok().map(|r| {
+            PathBuf::from(r)
+                .join("hypr")
+                .join(&sig)
+                .join(".socket.sock")
+        }),
         Some(PathBuf::from("/tmp/hypr").join(&sig).join(".socket.sock")),
     ];
     candidates.into_iter().flatten().find(|p| p.exists())

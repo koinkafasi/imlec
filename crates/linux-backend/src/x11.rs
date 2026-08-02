@@ -27,7 +27,9 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
         .allowed_depths
         .iter()
         .find(|d| d.depth == 32)
-        .ok_or_else(|| anyhow!("no 32-bit visual; a compositing manager such as picom is required"))?;
+        .ok_or_else(|| {
+            anyhow!("no 32-bit visual; a compositing manager such as picom is required")
+        })?;
     let visual = depth32
         .visuals
         .first()

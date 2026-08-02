@@ -6,7 +6,7 @@ use std::time::Instant;
 use windows::Win32::Foundation::{HWND, POINT, SIZE};
 use windows::Win32::Graphics::Gdi::{
     CreateCompatibleDC, CreateDIBSection, DeleteDC, DeleteObject, GetDC, ReleaseDC, SelectObject,
-    AC_SRC_ALPHA, AC_SRC_OVER, BITMAPINFO, BITMAPINFOHEADER, BLENDFUNCTION, BI_RGB, DIB_RGB_COLORS,
+    AC_SRC_ALPHA, AC_SRC_OVER, BITMAPINFO, BITMAPINFOHEADER, BI_RGB, BLENDFUNCTION, DIB_RGB_COLORS,
     HBITMAP, HDC, HGDIOBJ,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -76,14 +76,7 @@ impl LayeredSurface {
 
         let mut bits: *mut c_void = std::ptr::null_mut();
         let bitmap = unsafe {
-            CreateDIBSection(
-                Some(self.mem_dc),
-                &info,
-                DIB_RGB_COLORS,
-                &mut bits,
-                None,
-                0,
-            )
+            CreateDIBSection(Some(self.mem_dc), &info, DIB_RGB_COLORS, &mut bits, None, 0)
         }
         .context("CreateDIBSection")?;
 

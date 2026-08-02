@@ -6,7 +6,7 @@ use std::sync::Mutex;
 use windows::core::{w, HSTRING, PCWSTR};
 use windows::Win32::Foundation::{HWND, LPARAM, LRESULT, POINT, WPARAM};
 use windows::Win32::UI::Shell::{
-    Shell_NotifyIconW, ShellExecuteW, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE,
+    ShellExecuteW, Shell_NotifyIconW, NIF_ICON, NIF_MESSAGE, NIF_TIP, NIM_ADD, NIM_DELETE,
     NOTIFYICONDATAW,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
@@ -114,15 +114,7 @@ fn show_menu(hwnd: HWND) {
         if GetCursorPos(&mut point).is_ok() {
             // Required so the menu closes when the user clicks elsewhere.
             let _ = SetForegroundWindow(hwnd);
-            let _ = TrackPopupMenu(
-                menu,
-                TPM_RIGHTBUTTON,
-                point.x,
-                point.y,
-                Some(0),
-                hwnd,
-                None,
-            );
+            let _ = TrackPopupMenu(menu, TPM_RIGHTBUTTON, point.x, point.y, Some(0), hwnd, None);
             let _ = PostMessageW(Some(hwnd), WM_NULL, WPARAM(0), LPARAM(0));
         }
         let _ = DestroyMenu(menu);

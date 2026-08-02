@@ -48,16 +48,33 @@ jobs:
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          New-Item -ItemType Directory -Force -Path dist | Out-Null
-          Copy-Item target/${{ matrix.target }}/release/imlec.exe dist/
-          Copy-Item config/default.toml dist/
-          Copy-Item README.md, LICENSE dist/
-          Compress-Archive -Path dist/* -DestinationPath ${{ matrix.archive }}
+          New-Item -ItemType Directory -Force -Path dist/payload | Out-Null
+          Copy-Item target/${{ matrix.target }}/release/imlec.exe dist/payload/
+          Copy-Item config/default.toml dist/payload/
+          Copy-Item README.md, LICENSE dist/payload/
+          Compress-Archive -Path dist/payload/* -DestinationPath ${{ matrix.archive }}
+
+      - name: Build installer (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $version = "${{ github.ref_name }}" -replace '^v', ''
+          if (-not $version) { $version = '0.1.0' }
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" `
+            "/DAppVersion=$version" packaging\windows\imlec.iss
+          if ($LASTEXITCODE -ne 0) { throw "ISCC failed with $LASTEXITCODE" }
+          Move-Item dist/imlec-setup-x64.exe . -Force
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.archive }}
           path: ${{ matrix.archive }}
+
+      - uses: actions/upload-artifact@v4
+        if: runner.os == 'Windows'
+        with:
+          name: imlec-setup-x64.exe
+          path: imlec-setup-x64.exe
 
   release:
     needs: build
@@ -71,6 +88,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           files: |
+            imlec-setup-x64.exe
             imlec-x86_64-linux.tar.gz
             imlec-x86_64-windows.zip
           generate_release_notes: true

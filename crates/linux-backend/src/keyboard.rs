@@ -9,7 +9,10 @@ use std::time::Duration;
 pub enum InputSignal {
     Key(KeyClass),
     /// Raw relative pointer motion, used only by the fallback pointer tracker.
-    Motion { dx: f32, dy: f32 },
+    Motion {
+        dx: f32,
+        dy: f32,
+    },
 }
 
 const BTN_MISC: u16 = 0x100;
@@ -44,7 +47,9 @@ fn classify(code: KeyCode) -> KeyClass {
 
 fn is_keyboard(dev: &Device) -> bool {
     dev.supported_keys().is_some_and(|keys| {
-        keys.contains(KeyCode::KEY_A) && keys.contains(KeyCode::KEY_Z) && keys.contains(KeyCode::KEY_SPACE)
+        keys.contains(KeyCode::KEY_A)
+            && keys.contains(KeyCode::KEY_Z)
+            && keys.contains(KeyCode::KEY_SPACE)
     })
 }
 

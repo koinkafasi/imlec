@@ -131,13 +131,10 @@ impl Renderer {
         clear.set_color(Color::TRANSPARENT);
         clear.blend_mode = BlendMode::Clear;
         clear.anti_alias = false;
-        if let Some(r) = Rect::from_xywh(
-            rect.x as f32,
-            rect.y as f32,
-            rect.w as f32,
-            rect.h as f32,
-        ) {
-            self.pixmap.fill_rect(r, &clear, Transform::identity(), None);
+        if let Some(r) = Rect::from_xywh(rect.x as f32, rect.y as f32, rect.w as f32, rect.h as f32)
+        {
+            self.pixmap
+                .fill_rect(r, &clear, Transform::identity(), None);
         }
     }
 
@@ -177,8 +174,13 @@ impl Renderer {
                 continue;
             };
             paint.set_color(color);
-            self.pixmap
-                .fill_path(&path, &paint, FillRule::Winding, Transform::identity(), None);
+            self.pixmap.fill_path(
+                &path,
+                &paint,
+                FillRule::Winding,
+                Transform::identity(),
+                None,
+            );
         }
     }
 

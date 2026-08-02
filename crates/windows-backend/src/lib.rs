@@ -26,12 +26,12 @@ use windows::Win32::UI::Input::KeyboardAndMouse::{
     VK_NUMLOCK, VK_RCONTROL, VK_RMENU, VK_RSHIFT, VK_RWIN, VK_SCROLL, VK_SHIFT,
 };
 use windows::Win32::UI::WindowsAndMessaging::{
-    CallNextHookEx, CreateWindowExW, DispatchMessageW, GetCursorPos, GetSystemMetrics,
-    LoadCursorW, PeekMessageW, RegisterClassW, SetWindowsHookExW, TranslateMessage,
-    UnhookWindowsHookEx, HC_ACTION, HHOOK, IDC_ARROW, KBDLLHOOKSTRUCT, MSG, PM_REMOVE,
-    SM_CXVIRTUALSCREEN, SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, WH_KEYBOARD_LL,
-    WM_KEYDOWN, WM_QUIT, WM_SYSKEYDOWN, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW,
-    WS_EX_TOPMOST, WS_EX_TRANSPARENT, WS_POPUP,
+    CallNextHookEx, CreateWindowExW, DispatchMessageW, GetCursorPos, GetSystemMetrics, LoadCursorW,
+    PeekMessageW, RegisterClassW, SetWindowsHookExW, TranslateMessage, UnhookWindowsHookEx,
+    HC_ACTION, HHOOK, IDC_ARROW, KBDLLHOOKSTRUCT, MSG, PM_REMOVE, SM_CXVIRTUALSCREEN,
+    SM_CYVIRTUALSCREEN, SM_XVIRTUALSCREEN, SM_YVIRTUALSCREEN, WH_KEYBOARD_LL, WM_KEYDOWN, WM_QUIT,
+    WM_SYSKEYDOWN, WNDCLASSW, WS_EX_LAYERED, WS_EX_NOACTIVATE, WS_EX_TOOLWINDOW, WS_EX_TOPMOST,
+    WS_EX_TRANSPARENT, WS_POPUP,
 };
 
 /// Bounded so a stalled render loop cannot grow the queue without limit.
@@ -162,7 +162,8 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
     let _hook_guard = HookGuard(hook);
 
     let mut surface = LayeredSurface::new(overlay)?;
-    let mut renderer = Renderer::new(512, 512).ok_or_else(|| anyhow!("pixmap allocation failed"))?;
+    let mut renderer =
+        Renderer::new(512, 512).ok_or_else(|| anyhow!("pixmap allocation failed"))?;
     let mut system = ParticleSystem::new(config);
 
     let virtual_screen = virtual_screen_rect();

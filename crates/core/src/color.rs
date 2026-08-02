@@ -137,7 +137,11 @@ impl ColorMode {
                 speed,
                 saturation,
                 value,
-            } => Rgba::from_hsv(elapsed * speed + fastrand::f32() * 20.0, *saturation, *value),
+            } => Rgba::from_hsv(
+                elapsed * speed + fastrand::f32() * 20.0,
+                *saturation,
+                *value,
+            ),
         }
     }
 }
