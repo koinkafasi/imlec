@@ -1,0 +1,87 @@
+# imlec — particle cursor effect
+# Linux:   ~/.config/particle-cursor/config.toml
+# Windows: %APPDATA%\particle-cursor\config.toml
+#
+# Edits are picked up live; no restart needed.
+
+[general]
+enabled = true
+fps = 60
+
+# Hard ceiling on live particles. Lower it on weak hardware.
+max_particles = 600
+
+# Reference cursor height in pixels. Particle size = cursor_height_px * size_ratio,
+# so the default 20 * 0.5 gives particles half the height of the caret.
+cursor_height_px = 20.0
+
+# Nudge the spawn point away from the pointer hotspot.
+offset_x = 0.0
+offset_y = 0.0
+
+# Fast consecutive keystrokes ramp the particle count up, power-mode style.
+combo_enabled = true
+combo_window_ms = 600
+combo_max_multiplier = 2.5
+
+# Keys firing faster than this emit nothing. Guards against held-key repeat floods.
+min_emit_interval_ms = 16
+
+
+# --- Typing: letters, digits, space, enter, arrows ---------------------------
+[typing]
+enabled = true
+count = 6
+
+# circle | square | triangle | diamond | star | spark | hexagon
+shape = "circle"
+
+size_ratio = 0.5
+size_jitter = 0.4
+
+lifetime_ms = 500
+lifetime_jitter = 0.3
+
+speed = 130.0
+speed_jitter = 0.6
+
+# Emission cone. 0 = right, -90 = up, 90 = down. spread_deg 360 = all directions.
+direction_deg = -90.0
+spread_deg = 140.0
+
+# Downward acceleration px/s^2. Negative floats particles upward.
+gravity = 320.0
+drag = 1.8
+rotation_speed = 3.0
+shrink = true
+
+[typing.color]
+# mode = "fixed"    -> color   = "#ff2d95"
+# mode = "palette"  -> colors  = ["#ff2d95", "#2de2e6"]
+# mode = "gradient" -> from/to = "#ff2d95" / "#2de2e6"
+# mode = "rainbow"  -> speed, saturation, value
+mode = "palette"
+colors = ["#ff2d95", "#ff9f1c", "#2de2e6", "#a06cff", "#f9f871"]
+
+
+# --- Deleting: backspace, delete ---------------------------------------------
+[deleting]
+enabled = true
+count = 8
+shape = "spark"
+size_ratio = 0.5
+size_jitter = 0.4
+lifetime_ms = 340
+lifetime_jitter = 0.3
+speed = 90.0
+speed_jitter = 0.6
+direction_deg = 90.0
+spread_deg = 360.0
+gravity = -60.0
+drag = 1.8
+rotation_speed = 3.0
+shrink = true
+
+[deleting.color]
+mode = "fixed"
+color = "#ff3b30"

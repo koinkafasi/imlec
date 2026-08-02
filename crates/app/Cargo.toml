@@ -1,0 +1,24 @@
+[package]
+name = "imlec"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Cross-platform particle effects that follow your cursor while you type"
+repository.workspace = true
+
+[[bin]]
+name = "imlec"
+path = "src/main.rs"
+
+[dependencies]
+pc-core = { path = "../core" }
+anyhow = "1"
+clap = { version = "4", features = ["derive"] }
+env_logger = "0.11"
+log = "0.4"
+
+[target.'cfg(target_os = "linux")'.dependencies]
+pc-linux = { path = "../linux-backend" }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+pc-windows = { path = "../windows-backend" }

@@ -1,0 +1,44 @@
+# Maintainer: koinkafasi
+pkgname=imlec
+pkgver=0.1.0
+pkgrel=1
+pkgdesc="Particle effects that follow the cursor while you type, in every application"
+arch=('x86_64')
+url="https://github.com/koinkafasi/imlec"
+license=('MIT')
+depends=('gcc-libs')
+makedepends=('cargo' 'git')
+source=("$pkgname-$pkgver.tar.gz::$url/archive/refs/tags/v$pkgver.tar.gz")
+sha256sums=('SKIP')
+
+prepare() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo fetch --locked --target "$(rustc -vV | sed -n 's/host: //p')"
+}
+
+build() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  export CARGO_TARGET_DIR=target
+  cargo build --frozen --release --bin imlec
+}
+
+check() {
+  cd "$pkgname-$pkgver"
+  export RUSTUP_TOOLCHAIN=stable
+  cargo test --frozen --workspace
+}
+
+package() {
+  cd "$pkgname-$pkgver"
+  install -Dm755 "target/release/imlec" "$pkgdir/usr/bin/imlec"
+  install -Dm644 "config/default.toml" "$pkgdir/usr/share/imlec/default.toml"
+  install -Dm644 "packaging/systemd/imlec.service" "$pkgdir/usr/lib/systemd/user/imlec.service"
+  install -Dm644 "LICENSE" "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+  install -Dm644 "README.md" "$pkgdir/usr/share/doc/$pkgname/README.md"
+}
+
+# Reading /dev/input requires membership of the input group:
+#   sudo usermod -aG input "$USER"
+# Then log out and back in.

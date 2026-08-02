@@ -1,0 +1,13 @@
+[package]
+name = "pc-linux"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[target.'cfg(target_os = "linux")'.dependencies]
+pc-core = { path = "../core" }
+anyhow = "1"
+log = "0.4"
+evdev = "0.13"
+x11rb = { version = "0.13", features = ["shape"] }
+smithay-client-toolkit = { version = "0.21.1", default-features = false, features = ["calloop"] }

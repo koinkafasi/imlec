@@ -1,0 +1,14 @@
+[package]
+name = "pc-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+toml = "0.8"
+directories = "5"
+fastrand = "2"
+anyhow = "1"
+log = "0.4"
+tiny-skia = "0.12"
