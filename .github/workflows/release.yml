@@ -44,7 +44,7 @@ jobs:
           cp README.md LICENSE dist/
           tar -czf ${{ matrix.archive }} -C dist .
 
-      - name: Package (Windows)
+      - name: Stage payload (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
@@ -52,7 +52,32 @@ jobs:
           Copy-Item target/${{ matrix.target }}/release/imlec.exe dist/payload/
           Copy-Item config/default.toml dist/payload/
           Copy-Item README.md, LICENSE dist/payload/
-          Compress-Archive -Path dist/payload/* -DestinationPath ${{ matrix.archive }}
+
+      # Authenticode signing. Skipped when the signing secrets are absent, so
+      # forks and unsigned dry runs still produce a release. Without a signature
+      # Windows Smart App Control refuses to launch the binary.
+      - name: Sign imlec.exe
+        if: runner.os == 'Windows' && env.AZURE_CLIENT_ID != ''
+        uses: azure/trusted-signing-action@v0
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files-folder: ${{ github.workspace }}\dist\payload
+          files-folder-filter: exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/payload/* -DestinationPath ${{ matrix.archive }}
 
       - name: Build installer (Windows)
         if: runner.os == 'Windows'
@@ -64,6 +89,23 @@ jobs:
             "/DAppVersion=$version" packaging\windows\imlec.iss
           if ($LASTEXITCODE -ne 0) { throw "ISCC failed with $LASTEXITCODE" }
           Move-Item dist/imlec-setup-x64.exe . -Force
+
+      - name: Sign the installer
+        if: runner.os == 'Windows' && env.AZURE_CLIENT_ID != ''
+        uses: azure/trusted-signing-action@v0
+        env:
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+        with:
+          azure-tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          azure-client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          azure-client-secret: ${{ secrets.AZURE_CLIENT_SECRET }}
+          endpoint: ${{ secrets.AZURE_SIGNING_ENDPOINT }}
+          trusted-signing-account-name: ${{ secrets.AZURE_SIGNING_ACCOUNT }}
+          certificate-profile-name: ${{ secrets.AZURE_CERT_PROFILE }}
+          files: ${{ github.workspace }}\imlec-setup-x64.exe
+          file-digest: SHA256
+          timestamp-rfc3161: http://timestamp.acs.microsoft.com
+          timestamp-digest: SHA256
 
       - uses: actions/upload-artifact@v4
         with:
@@ -85,10 +127,14 @@ jobs:
         with:
           merge-multiple: true
 
+      - name: Checksums
+        run: sha256sum imlec-setup-x64.exe imlec-x86_64-linux.tar.gz imlec-x86_64-windows.zip > SHA256SUMS
+
       - uses: softprops/action-gh-release@v2
         with:
           files: |
             imlec-setup-x64.exe
             imlec-x86_64-linux.tar.gz
             imlec-x86_64-windows.zip
+            SHA256SUMS
           generate_release_notes: true

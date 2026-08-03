@@ -152,6 +152,69 @@ Yazma ve silme için ayrı şekil, renk, boyut ve fizik ayarlanabilir.
 
 ---
 
+## Windows imzalama
+
+Yayınlanan binary'ler şu an **kod imzalı değil**. Windows 11'de **Smart App
+Control** açıksa imzasız uygulamayı çalıştırmaz ve şunu görürsün:
+
+```
+Uygulama Denetimi ilkesi bu dosyayı engelledi.
+```
+
+Durumunu kontrol et:
+
+```powershell
+(Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' -Name VerifiedAndReputablePolicyState).VerifiedAndReputablePolicyState
+```
+
+`0` kapalı, `1` zorlama (engeller), `2` değerlendirme modu.
+
+### Kalıcı çözüm: kod imzalama sertifikası
+
+Sertifika satın alınması gereken bir şey; kod tarafında halledilemez. CI zaten
+imzalamaya hazır — aşağıdaki secret'ları depoya eklediğin an her release
+otomatik imzalanır (`.github/workflows/release.yml`):
+
+| secret | ne |
+|---|---|
+| `AZURE_TENANT_ID` | Azure dizin kimliği |
+| `AZURE_CLIENT_ID` | uygulama kaydı kimliği |
+| `AZURE_CLIENT_SECRET` | uygulama gizli anahtarı |
+| `AZURE_SIGNING_ENDPOINT` | ör. `https://weu.codesigning.azure.net` |
+| `AZURE_SIGNING_ACCOUNT` | Trusted Signing hesap adı |
+| `AZURE_CERT_PROFILE` | sertifika profili adı |
+
+Seçenekler:
+
+| yol | maliyet | CI'da çalışır | SAC'i hemen aşar |
+|---|---|---|---|
+| **Azure Trusted Signing** | ~10 USD/ay | evet | genelde evet |
+| EV kod imzalama sertifikası | ~300-600 USD/yıl | donanım token gerekir, zor | evet |
+| OV kod imzalama sertifikası | ~200-400 USD/yıl | HSM ile | hayır, itibar birikmesi gerekir |
+| Kendinden imzalı sertifika | ücretsiz | evet | **hayır** |
+
+Azure Trusted Signing bireysel hesaplara da açık ama kimlik doğrulaması ister
+(bireyler için 3+ yıllık doğrulanabilir geçmiş şartı var). Kendinden imzalı
+sertifika bu sorunu **çözmez** — Windows onu tanımaz.
+
+### Geçici çözüm
+
+Smart App Control'ü kapatmak:
+Ayarlar > Gizlilik ve güvenlik > Windows Güvenliği > Uygulama ve tarayıcı
+denetimi > Smart App Control ayarları.
+
+> **Bunu geri alamazsın.** Smart App Control kapatıldıktan sonra yeniden
+> açılamaz; açmak Windows'u sıfırdan kurmayı gerektirir. Sadece ne yaptığını
+> bilerek yap.
+
+İmza gelene kadar indirdiğin dosyayı `SHA256SUMS` ile doğrulayabilirsin:
+
+```powershell
+Get-FileHash imlec-setup-x64.exe -Algorithm SHA256
+```
+
+---
+
 ## Güncelleme
 
 ```bash

@@ -26,6 +26,9 @@ if ($asset) {
     Invoke-WebRequest $asset.browser_download_url -OutFile $zip
     Expand-Archive -Path $zip -DestinationPath $Target -Force
     Remove-Item $zip -Force
+    # Downloaded archives carry a Mark-of-the-Web that Expand-Archive copies onto
+    # every extracted file; clearing it avoids a needless SmartScreen prompt.
+    Get-ChildItem $Target -Recurse -File | Unblock-File -ErrorAction SilentlyContinue
 } else {
     if (-not (Get-Command cargo -ErrorAction SilentlyContinue)) {
         throw "No release binary found and cargo is not installed. Install Rust from https://rustup.rs and rerun."
@@ -71,4 +74,25 @@ Write-Host "  Right-click the tray icon to toggle effects, open the config or ex
 Write-Host "  Remove autostart by deleting $shortcut"
 Write-Host ""
 
-Start-Process $exe
+try {
+    Start-Process $exe -ErrorAction Stop
+} catch {
+    Warn "Windows refused to launch imlec: $($_.Exception.Message)"
+    $sac = try {
+        (Get-ItemProperty 'HKLM:\SYSTEM\CurrentControlSet\Control\CI\Policy' `
+            -Name VerifiedAndReputablePolicyState -ErrorAction Stop).VerifiedAndReputablePolicyState
+    } catch { $null }
+    if ($sac -eq 1) {
+        Write-Host ""
+        Write-Host "  Smart App Control is in enforcement mode. It only runs signed"
+        Write-Host "  applications that Microsoft already considers reputable, so it"
+        Write-Host "  blocks imlec until the release binaries are code signed."
+        Write-Host ""
+        Write-Host "  Settings > Privacy & security > Windows Security >"
+        Write-Host "  App & browser control > Smart App Control settings"
+        Write-Host ""
+        Write-Host "  Turning it off is IRREVERSIBLE: re-enabling requires reinstalling"
+        Write-Host "  Windows. Read https://github.com/koinkafasi/imlec#windows-imzalama"
+        Write-Host "  before deciding."
+    }
+}
