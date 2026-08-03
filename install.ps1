@@ -31,6 +31,8 @@ if ($asset) {
         throw "No release binary found and cargo is not installed. Install Rust from https://rustup.rs and rerun."
     }
     Warn "no prebuilt release found, building from source"
+    Warn "a source build needs the MSVC toolchain AND the Windows SDK; it also fails if"
+    Warn "a Unix 'link' (Git Bash, MSYS, Cygwin) shadows MSVC's link.exe on PATH"
     $src = Join-Path $env:TEMP 'imlec-src'
     if (Test-Path $src) { Remove-Item $src -Recurse -Force }
     git clone --depth 1 "https://github.com/$Repo.git" $src
