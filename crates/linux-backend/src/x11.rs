@@ -16,6 +16,9 @@ use x11rb::protocol::xproto::{
 /// Keeps PutImage requests comfortably below the server's maximum request size.
 const MAX_CHUNK_BYTES: usize = 256 * 1024;
 
+/// How often the config file's mtime is checked, so `imlec tune` feels live.
+const CONFIG_POLL: Duration = Duration::from_millis(400);
+
 pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
     let (conn, screen_num) = x11rb::connect(None).context("connecting to the X server")?;
     let screen = &conn.setup().roots[screen_num];
@@ -119,7 +122,7 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
             handle_signal(signal, &mut system, &mut pointer);
         }
 
-        if last_config_check.elapsed() >= Duration::from_secs(2) {
+        if last_config_check.elapsed() >= CONFIG_POLL {
             last_config_check = Instant::now();
             if let Some(path) = &config_path {
                 let current = mtime(path);

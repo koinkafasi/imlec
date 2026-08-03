@@ -20,7 +20,8 @@ const WM_TRAY: u32 = WM_APP + 1;
 const ID_TOGGLE: usize = 1;
 const ID_CONFIG: usize = 2;
 const ID_RELOAD: usize = 3;
-const ID_EXIT: usize = 4;
+const ID_TUNE: usize = 4;
+const ID_EXIT: usize = 5;
 
 static CONFIG_PATH: Mutex<Option<PathBuf>> = Mutex::new(None);
 
@@ -83,6 +84,7 @@ pub unsafe extern "system" fn wnd_proc(
                 }
                 ID_CONFIG => open_config(),
                 ID_RELOAD => RELOAD.store(true, Ordering::Relaxed),
+                ID_TUNE => open_tune(),
                 ID_EXIT => QUIT.store(true, Ordering::Relaxed),
                 _ => {}
             }
@@ -105,6 +107,7 @@ fn show_menu(hwnd: HWND) {
             MF_UNCHECKED
         };
         let _ = AppendMenuW(menu, MF_STRING | checked, ID_TOGGLE, w!("Effects enabled"));
+        let _ = AppendMenuW(menu, MF_STRING, ID_TUNE, w!("Tune settings (live)"));
         let _ = AppendMenuW(menu, MF_STRING, ID_CONFIG, w!("Open config file"));
         let _ = AppendMenuW(menu, MF_STRING, ID_RELOAD, w!("Reload config"));
         let _ = AppendMenuW(menu, MF_SEPARATOR, 0, PCWSTR::null());
@@ -118,6 +121,17 @@ fn show_menu(hwnd: HWND) {
             let _ = PostMessageW(Some(hwnd), WM_NULL, WPARAM(0), LPARAM(0));
         }
         let _ = DestroyMenu(menu);
+    }
+}
+
+/// Launches the terminal settings editor in its own console window.
+fn open_tune() {
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
+    let file = HSTRING::from(exe.as_os_str());
+    unsafe {
+        ShellExecuteW(None, w!("open"), &file, w!("tune"), None, SW_SHOWNORMAL);
     }
 }
 

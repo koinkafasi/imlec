@@ -61,6 +61,34 @@ rasterizer bağımlılıklarının hepsi saf Rust.
 
 ## Ayarlar
 
+### Canlı ayar arayüzü
+
+```bash
+imlec tune
+```
+
+Terminal içinde açılan editörde ok tuşlarıyla renk, şekil, boyut, hız, yerçekimi
+ve ömrü değiştirirsin; her değişiklik anında dosyaya yazılır ve çalışan overlay
+yarım saniye içinde uygular. Yani ekranda gerçek efekti görerek ayar yaparsın.
+
+| tuş | iş |
+|---|---|
+| `←` `→` | değeri azalt / artır |
+| `Shift` + ok | 10 kat büyük adım |
+| `↑` `↓` | alan seç |
+| `Tab` | General / Typing / Deleting arası geç |
+| `[` `]` | palet rengi seç |
+| `a` / `x` | palete renk ekle / çıkar |
+| `r` | varsayılanlara dön |
+| `q` | çık |
+
+Renkler HSV olarak ayarlanır (hue / saturation / value), hex yazmaya gerek yok.
+Dosyadaki açıklama satırları düzenleme sonrası korunur.
+
+Windows'ta tepsi simgesine sağ tıkla > **Tune settings (live)**.
+
+### Config dosyası
+
 ```bash
 imlec --print-config-path
 ```
@@ -121,6 +149,25 @@ color = "#ff3b30"
 | `rainbow` | `speed`, `saturation`, `value` |
 
 Yazma ve silme için ayrı şekil, renk, boyut ve fizik ayarlanabilir.
+
+---
+
+## Güncelleme
+
+```bash
+imlec update
+```
+
+GitHub Releases'ten platformuna uygun son sürümü indirir ve çalışan binary'yi
+değiştirir. Sadece kontrol etmek için `imlec update --check`.
+
+Overlay çalışırken günde bir kez arka planda yeni sürüm kontrolü yapılır ve
+**sadece log'a yazar** — sessizce kurulum yapmaz. Kurulum her zaman senin
+`imlec update` demenle olur.
+
+`/usr/bin`, `/opt` gibi paket yöneticisine ait konumlara kurulmuşsa kendini
+güncellemeyi reddeder; o durumda `pacman`/AUR ile güncellenir. Windows'ta
+installer ile kurduysan yeni `imlec-setup-x64.exe` de üstüne kurar.
 
 ---
 

@@ -1,5 +1,8 @@
+mod tune;
+mod update;
+
 use anyhow::{Context, Result};
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use pc_core::Config;
 use std::path::PathBuf;
 
@@ -10,8 +13,11 @@ use std::path::PathBuf;
     about = "Particle effects that follow the cursor while you type, on any application"
 )]
 struct Cli {
+    #[command(subcommand)]
+    command: Option<Command>,
+
     /// Use a config file other than the default location.
-    #[arg(short, long, value_name = "FILE")]
+    #[arg(short, long, value_name = "FILE", global = true)]
     config: Option<PathBuf>,
 
     /// Print the config file path and exit.
@@ -27,8 +33,20 @@ struct Cli {
     backend: Option<String>,
 
     /// Log more detail. Repeat for debug output.
-    #[arg(short, long, action = clap::ArgAction::Count)]
+    #[arg(short, long, action = clap::ArgAction::Count, global = true)]
     verbose: u8,
+}
+
+#[derive(Subcommand, Debug)]
+enum Command {
+    /// Edit settings in a live terminal UI; the running overlay picks up every change.
+    Tune,
+    /// Install the newest release from GitHub.
+    Update {
+        /// Report whether an update exists without installing it.
+        #[arg(long)]
+        check: bool,
+    },
 }
 
 fn main() -> Result<()> {
@@ -40,6 +58,10 @@ fn main() -> Result<()> {
         _ => "trace",
     };
     env_logger::Builder::from_env(env_logger::Env::default().default_filter_or(level)).init();
+
+    if let Some(Command::Update { check }) = cli.command {
+        return update::run(check);
+    }
 
     let path = match cli.config.clone() {
         Some(path) => path,
@@ -61,12 +83,17 @@ fn main() -> Result<()> {
         return Ok(());
     }
 
+    if let Some(Command::Tune) = cli.command {
+        return tune::run(path);
+    }
+
     let config = if cli.config.is_some() {
         Config::load_from(&path)?
     } else {
         Config::load_or_init()?
     };
     log::info!("config: {}", path.display());
+    update::spawn_background_check();
 
     run(config, Some(path), cli.backend.as_deref())
 }

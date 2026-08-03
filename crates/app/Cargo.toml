@@ -14,11 +14,19 @@ path = "src/main.rs"
 pc-core = { path = "../core" }
 anyhow = "1"
 clap = { version = "4", features = ["derive"] }
+directories = "5"
 env_logger = "0.11"
 log = "0.4"
+ratatui = "0.30"
+self-replace = "1"
+toml_edit = "0.22"
+ureq = { version = "3", default-features = false, features = ["rustls"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 pc-linux = { path = "../linux-backend" }
+flate2 = "1"
+tar = "0.4"
 
 [target.'cfg(target_os = "windows")'.dependencies]
 pc-windows = { path = "../windows-backend" }
+zip = { version = "2", default-features = false, features = ["deflate"] }

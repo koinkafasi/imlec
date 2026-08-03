@@ -37,6 +37,9 @@ use windows::Win32::UI::WindowsAndMessaging::{
 /// Bounded so a stalled render loop cannot grow the queue without limit.
 const MAX_QUEUED_KEYS: usize = 64;
 
+/// How often the config file's mtime is checked, so `imlec tune` feels live.
+const CONFIG_POLL: Duration = Duration::from_millis(400);
+
 static KEY_QUEUE: Mutex<Vec<KeyClass>> = Mutex::new(Vec::new());
 pub(crate) static ENABLED: AtomicBool = AtomicBool::new(true);
 pub(crate) static QUIT: AtomicBool = AtomicBool::new(false);
@@ -180,7 +183,7 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
 
         drain_keys(&mut system);
 
-        if last_config_check.elapsed() >= Duration::from_secs(2) {
+        if last_config_check.elapsed() >= CONFIG_POLL {
             last_config_check = Instant::now();
             if let Some(path) = &config_path {
                 let current = mtime(path);

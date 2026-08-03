@@ -38,6 +38,10 @@ use smithay_client_toolkit::{
 use std::path::PathBuf;
 use std::time::{Duration, Instant, SystemTime};
 
+/// How often the config file's mtime is checked. Short enough that `imlec tune`
+/// feels live, and a single stat call is far too cheap to matter.
+const CONFIG_POLL: Duration = Duration::from_millis(400);
+
 /// wl_region carries no events, but the object still needs a dispatch target.
 struct RegionData;
 
@@ -275,13 +279,10 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
 
     // Config reload poll. Cheap enough at 2s and avoids an inotify dependency.
     loop_handle
-        .insert_source(
-            Timer::from_duration(Duration::from_secs(2)),
-            |_, _, state| {
-                state.reload_config_if_changed();
-                TimeoutAction::ToDuration(Duration::from_secs(2))
-            },
-        )
+        .insert_source(Timer::from_duration(CONFIG_POLL), |_, _, state| {
+            state.reload_config_if_changed();
+            TimeoutAction::ToDuration(CONFIG_POLL)
+        })
         .map_err(|e| anyhow!("inserting config watcher: {e}"))?;
 
     loop {

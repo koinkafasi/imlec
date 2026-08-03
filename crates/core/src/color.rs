@@ -59,6 +59,33 @@ impl Rgba {
         )
     }
 
+    pub fn to_hsv(self) -> (f32, f32, f32) {
+        let max = self.r.max(self.g).max(self.b);
+        let min = self.r.min(self.g).min(self.b);
+        let delta = max - min;
+
+        let hue = if delta <= f32::EPSILON {
+            0.0
+        } else if max == self.r {
+            60.0 * (((self.g - self.b) / delta) % 6.0)
+        } else if max == self.g {
+            60.0 * ((self.b - self.r) / delta + 2.0)
+        } else {
+            60.0 * ((self.r - self.g) / delta + 4.0)
+        };
+        let saturation = if max <= f32::EPSILON {
+            0.0
+        } else {
+            delta / max
+        };
+        (hue.rem_euclid(360.0), saturation, max)
+    }
+
+    pub fn to_hex(self) -> String {
+        let [r, g, b, _] = self.to_rgba8();
+        format!("#{r:02x}{g:02x}{b:02x}")
+    }
+
     pub fn to_rgba8(self) -> [u8; 4] {
         [
             (self.r.clamp(0.0, 1.0) * 255.0) as u8,
@@ -114,7 +141,114 @@ impl Default for ColorMode {
     }
 }
 
+/// Editing surface used by `imlec tune`. Every mode is presented as a list of
+/// colour slots plus an HSV triple, so one set of controls drives all four.
 impl ColorMode {
+    pub fn mode_name(&self) -> &'static str {
+        match self {
+            ColorMode::Fixed { .. } => "fixed",
+            ColorMode::Palette { .. } => "palette",
+            ColorMode::Gradient { .. } => "gradient",
+            ColorMode::Rainbow { .. } => "rainbow",
+        }
+    }
+
+    /// Cycles between modes, carrying the first colour across so the change is
+    /// visible rather than jarring.
+    pub fn cycle(&mut self, forward: bool) {
+        let carry = self.slot(0).unwrap_or(Rgba::new(1.0, 0.2, 0.6, 1.0));
+        let hex = carry.to_hex();
+        let order = ["fixed", "palette", "gradient", "rainbow"];
+        let current = order
+            .iter()
+            .position(|m| *m == self.mode_name())
+            .unwrap_or(0);
+        let next = if forward {
+            (current + 1) % order.len()
+        } else {
+            (current + order.len() - 1) % order.len()
+        };
+        *self = match order[next] {
+            "fixed" => ColorMode::Fixed { color: hex },
+            "palette" => ColorMode::Palette {
+                colors: vec![hex.clone(), hex],
+            },
+            "gradient" => ColorMode::Gradient {
+                from: hex,
+                to: "#2de2e6".into(),
+            },
+            _ => ColorMode::Rainbow {
+                speed: default_rainbow_speed(),
+                saturation: 1.0,
+                value: 1.0,
+            },
+        };
+    }
+
+    /// Number of editable colour slots. Rainbow has none; its HSV is generated.
+    pub fn slot_count(&self) -> usize {
+        match self {
+            ColorMode::Fixed { .. } => 1,
+            ColorMode::Palette { colors } => colors.len(),
+            ColorMode::Gradient { .. } => 2,
+            ColorMode::Rainbow { .. } => 0,
+        }
+    }
+
+    pub fn slot(&self, index: usize) -> Option<Rgba> {
+        let hex = match self {
+            ColorMode::Fixed { color } if index == 0 => color,
+            ColorMode::Palette { colors } => colors.get(index)?,
+            ColorMode::Gradient { from, .. } if index == 0 => from,
+            ColorMode::Gradient { to, .. } if index == 1 => to,
+            _ => return None,
+        };
+        Rgba::from_hex(hex)
+    }
+
+    pub fn set_slot(&mut self, index: usize, color: Rgba) {
+        let hex = color.to_hex();
+        match self {
+            ColorMode::Fixed { color } if index == 0 => *color = hex,
+            ColorMode::Palette { colors } => {
+                if let Some(slot) = colors.get_mut(index) {
+                    *slot = hex;
+                }
+            }
+            ColorMode::Gradient { from, .. } if index == 0 => *from = hex,
+            ColorMode::Gradient { to, .. } if index == 1 => *to = hex,
+            _ => {}
+        }
+    }
+
+    /// Only palettes are variable length; other modes ignore this.
+    pub fn add_slot(&mut self) {
+        if let ColorMode::Palette { colors } = self {
+            let seed = colors.last().cloned().unwrap_or_else(|| "#ff2d95".into());
+            colors.push(seed);
+        }
+    }
+
+    pub fn remove_slot(&mut self, index: usize) {
+        if let ColorMode::Palette { colors } = self {
+            if colors.len() > 1 && index < colors.len() {
+                colors.remove(index);
+            }
+        }
+    }
+
+    /// Rainbow exposes its own knobs instead of slots.
+    pub fn rainbow_mut(&mut self) -> Option<(&mut f32, &mut f32, &mut f32)> {
+        match self {
+            ColorMode::Rainbow {
+                speed,
+                saturation,
+                value,
+            } => Some((speed, saturation, value)),
+            _ => None,
+        }
+    }
+
     /// `elapsed` drives time-based modes; jitter picks per-particle variation.
     pub fn resolve(&self, elapsed: f32) -> Rgba {
         match self {
