@@ -189,6 +189,7 @@ pub fn run(check_only: bool) -> Result<()> {
 }
 
 fn download(url: &str) -> Result<Vec<u8>> {
+    use std::io::Read;
     let response = ureq::get(url)
         .header("User-Agent", USER_AGENT)
         .call()
