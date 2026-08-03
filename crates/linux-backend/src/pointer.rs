@@ -11,8 +11,9 @@ pub enum Pointer {
     /// Hyprland exposes `cursorpos` over its control socket: exact, cheap.
     Hyprland { socket: PathBuf, fallback: Relative },
     /// X11 answers QueryPointer against the root window: exact.
+    /// The connection is boxed to keep this variant from dominating the enum's size.
     X11 {
-        conn: x11rb::rust_connection::RustConnection,
+        conn: Box<x11rb::rust_connection::RustConnection>,
         root: x11rb::protocol::xproto::Window,
     },
     /// Anything else: integrate raw evdev motion. Approximate, since the
@@ -75,7 +76,10 @@ impl Pointer {
             if let Ok((conn, screen_num)) = x11rb::connect(None) {
                 let root = conn.setup().roots[screen_num].root;
                 log::info!("pointer source: X11 QueryPointer");
-                return Pointer::X11 { conn, root };
+                return Pointer::X11 {
+                    conn: Box::new(conn),
+                    root,
+                };
             }
         }
         log::warn!(

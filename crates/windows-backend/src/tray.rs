@@ -56,7 +56,7 @@ impl Tray {
 impl Drop for Tray {
     fn drop(&mut self) {
         unsafe {
-            Shell_NotifyIconW(NIM_DELETE, &self.data);
+            let _ = Shell_NotifyIconW(NIM_DELETE, &self.data);
         }
     }
 }
@@ -76,7 +76,7 @@ pub unsafe extern "system" fn wnd_proc(
             LRESULT(0)
         }
         WM_COMMAND => {
-            match (wparam.0 & 0xffff) as usize {
+            match wparam.0 & 0xffff {
                 ID_TOGGLE => {
                     let now = !ENABLED.load(Ordering::Relaxed);
                     ENABLED.store(now, Ordering::Relaxed);

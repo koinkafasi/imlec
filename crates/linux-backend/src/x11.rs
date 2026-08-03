@@ -96,7 +96,7 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
     let mut last_tick = Instant::now();
     let mut last_raise = Instant::now();
     let mut last_config_check = Instant::now();
-    let mut config_mtime = config_path.as_ref().and_then(|p| mtime(p));
+    let mut config_mtime = config_path.as_ref().and_then(mtime);
 
     loop {
         let idle = system.is_idle() && !renderer.has_previous();

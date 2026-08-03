@@ -170,7 +170,7 @@ pub fn run(config: Config, config_path: Option<PathBuf>) -> Result<()> {
     let mut frame_interval = Duration::from_secs_f32(1.0 / system.config().general.fps as f32);
     let mut last_tick = Instant::now();
     let mut last_config_check = Instant::now();
-    let mut config_mtime = config_path.as_ref().and_then(|p| mtime(p));
+    let mut config_mtime = config_path.as_ref().and_then(mtime);
 
     loop {
         pump_messages();
